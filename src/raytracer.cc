@@ -1,11 +1,29 @@
 #include "raytracer.hh"
+#define EPSILON 0.00001
 
 Object* Raytracer::collide_with_object(Ray ray, double& impact)
 {
+  double minimpact = 100000;
+  int kmin = -1;
+
   for (size_t k = 0; k < objects.size(); ++k)
+  {
     if (objects[k]->collide(ray, impact))
-      return objects[k];
-  return 0;
+    {
+      if (minimpact > impact)
+      {
+        kmin = k;
+        minimpact = impact;
+      }
+    }
+  }
+  if (kmin < 0)
+    return 0;
+  else
+  {
+    impact = minimpact;
+    return objects[kmin];
+  }
 }
 
 Vec3<int> Raytracer::trace(Ray ray, int bound)
@@ -28,9 +46,10 @@ Vec3<int> Raytracer::trace(Ray ray, int bound)
         ray2.ori = ray2.ori + ray.ori;
         ray2.dir = objects[k]->center() - ray2.ori;
         ray2.dir.normalize();
+	ray2.ori = ray2.ori + ray2.dir * EPSILON;
 
         if ((obj2 = collide_with_object(ray2, impact)))
-	  lumen += obj2->m.lumen;
+          lumen += obj2->m.lumen;
       }
     }
     return obj->m.col * lumen;
@@ -41,7 +60,9 @@ Vec3<int> Raytracer::trace(Ray ray, int bound)
 
 Raytracer::Raytracer()
 {
-  Sphere* tmp = new Sphere;
+  Sphere* tmp;
+
+  tmp = new Sphere;
   tmp->c.x = 2.0;
   tmp->c.y = 0.0;
   tmp->c.z = 5.0;

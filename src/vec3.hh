@@ -52,7 +52,7 @@ struct Vec3
       Vec3 ret(x - a.x, y - a.y, z - a.z);
       return ret;
     }
-  Vec3 operator+ (Vec3& a)
+  Vec3 operator+ (Vec3 a)
     {
       Vec3 ret(x + a.x, y + a.y, z + a.z);
       return ret;
