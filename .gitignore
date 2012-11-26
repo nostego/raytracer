@@ -2,6 +2,9 @@
 *.slo
 *.lo
 *.o
+*.inc
+raytracer
+out.ppm
 
 # Compiled Dynamic libraries
 *.so
