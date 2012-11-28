@@ -46,7 +46,7 @@ Vec3<int> Raytracer::trace(Ray ray, int bound)
         ray2.ori = ray2.ori + ray.ori;
         ray2.dir = objects[k]->center() - ray2.ori;
         ray2.dir.normalize();
-	ray2.ori = ray2.ori + ray2.dir * EPSILON;
+        ray2.ori = ray2.ori + ray2.dir * EPSILON;
 
         if ((obj2 = collide_with_object(ray2, impact)))
           lumen += obj2->m.lumen;
@@ -61,6 +61,17 @@ Vec3<int> Raytracer::trace(Ray ray, int bound)
 Raytracer::Raytracer()
 {
   Sphere* tmp;
+  Triangle* tri;
+
+  tri = new Triangle;
+  tri->m.col.x = 255;
+  tri->m.col.y = 0;
+  tri->m.col.z = 0;
+  tri->m.lumen = 0.0;
+  tri->a = Vec3<double>(0,0,0);
+  tri->b = Vec3<double>(0.4,0.4,0.4);
+  tri->c = Vec3<double>(2,3,3);
+  objects.push_back(tri);
 
   tmp = new Sphere;
   tmp->c.x = 2.0;
@@ -77,7 +88,7 @@ Raytracer::Raytracer()
   tmp->c.x = 5.0;
   tmp->c.y = 5.0;
   tmp->c.z = 5.0;
-  tmp->r = 2;
+  tmp->r = 0.5;
   tmp->m.col.x = 0;
   tmp->m.col.y = 255;
   tmp->m.col.z = 0;

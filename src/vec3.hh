@@ -24,7 +24,7 @@ struct Vec3
           << y << std::endl
           << z << std::endl;
     }
-  T operator*(Vec3& a)
+  T operator*(Vec3 a)
     {
       return (x * a.x + y * a.y + z * a.z);
     }
@@ -35,11 +35,15 @@ struct Vec3
     }
   void normalize()
     {
-      T len = length();
+      double len = length();
 
       x /= len;
       y /= len;
       z /= len;
+    }
+  Vec3 operator^ (Vec3 a)
+    {
+      return Vec3(y*a.z-z*a.y, z*a.x-x*a.z, x*a.y-y*a.x);
     }
   Vec3 operator* (double a)
     {

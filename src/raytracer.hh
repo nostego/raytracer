@@ -1,6 +1,7 @@
 #ifndef RAYTRACER_HH_
 # define RAYTRACER_HH_
 # include "sphere.hh"
+# include "triangle.hh"
 # include <vector>
 # include <cmath>
 
