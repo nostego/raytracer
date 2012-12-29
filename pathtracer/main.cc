@@ -75,10 +75,11 @@ Vec3 radiance(const Ray &r, int depth, unsigned short *Xi)
 
   const Sphere &obj = spheres[id];
 
-  // Intersection.
+  // Intersection point.
   Vec3 x = r.o_ + r.d_ * t;
-  // Distance between center of obs/intersection.
+  // Sphere normal.
   Vec3 n = (x - obj.pos_).norm();
+  // Oriented Sphere normal. (Is is entering of exiting).
   Vec3 nl = n.dot(r.d_) < 0 ? n : n * -1;
   Vec3 f = obj.color_;
 
@@ -93,30 +94,46 @@ Vec3 radiance(const Ray &r, int depth, unsigned short *Xi)
 
   if (obj.refl_ == DIFF)
   { // Ideal DIFFUSE reflection
+
+    // Random Angle.
     double r1 = 2 * M_PI * erand48(Xi);
     double r2 = erand48(Xi);
+    // Random distance from center.
     double r2s = sqrt(r2);
+    // Generate an unit hemisphere for random reflection.
     Vec3 w = nl;
     Vec3 u = ((fabs(w.x_) > .1 ? Vec3(0, 1) : Vec3(1)) % w).norm();
     Vec3 v = w % u;
+    // Random reflection array.
     Vec3 d = (u * cos(r1) * r2s + v * sin(r1) * r2s + w * sqrt(1 - r2)).norm();
-    return obj.emission_ + f.mult(radiance(Ray(x, d), depth, Xi));
+    return obj.emission_+ f.mult(radiance(Ray(x, d), depth, Xi));
   }
-  else if (obj.refl_ == SPEC) // Ideal SPECULAR reflection
+  // Ideal specular reflection (Mirror).
+  else if (obj.refl_ == SPEC)
     return obj.emission_ + f.mult(radiance(Ray(x, r.d_ - n * 2 * n.dot(r.d_)), depth, Xi));
-  Ray reflRay(x, r.d_ - n * 2 * n.dot(r.d_)); // Ideal dielectric REFRACTION
 
-  bool into = n.dot(nl) > 0; // Ray from outside going in?
+  // Ideal dielectric REFRACTION
+
+  // Reflected ray.
+  Ray reflRay(x, r.d_ - n * 2 * n.dot(r.d_));
+
+  // Entering or exiting ?
+  bool into = n.dot(nl) > 0;
   double nc = 1;
+  // Refractive index.
   double nt = 1.5;
   double nnt = into ? nc / nt : nt / nc;
   double ddn = r.d_.dot(nl);
   double cos2t = 1 - pow(nnt, 2) * (1 - pow(ddn, 2));
 
-  if (cos2t < 0) // Total internal reflection
+ // If angle is too shallow => total internal reflection.
+  if (cos2t < 0)
     return obj.emission_ + f.mult(radiance(reflRay,depth,Xi));
 
+  // Refraction ray !
   Vec3 tdir = (r.d_ * nnt - n * ((into ? 1 :-1) * (ddn * nnt + sqrt(cos2t)))).norm();
+
+  // Fresnel term, percentage of light reflected.
   double a = nt - nc;
   double b = nt + nc;
   double R0 = pow(a, 2) / (pow(b, 2));
