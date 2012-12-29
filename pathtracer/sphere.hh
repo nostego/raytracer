@@ -17,6 +17,8 @@
    {}
 
      double radius_;
+
+     // Find the point ON the ray which intersects the sphere.
      double intersect(const Ray &r) const
      {
        // Quadratic equation.
@@ -33,7 +35,8 @@
        else
          det = sqrt(det);
 
-       return (t=b-det)>eps ? t : ((t=b+det)>eps ? t : 0);
+       // Two intersection, x1 and x2.
+       return (t = b - det) > eps ? t : ((t = b + det) > eps ? t : 0);
      }
  };
 
