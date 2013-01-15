@@ -36,7 +36,7 @@ Sphere spheres[] =
 
 Triangle triangles[] =
 {
-  Triangle(Vec3(15, 33.5, 98), Vec3(27, 33.5, 98), Vec3(19, 48.4, 98), Vec3(),Vec3(1,1,1)*.999, REFR)
+  Triangle(Vec3(15, 33.5, 98), Vec3(36, 33.5, 98), Vec3(19, 54.4, 98), Vec3(),Vec3(1,1,1)*.999, DIFF)
 };
 Sphere spheres[] =
 {
@@ -129,6 +129,8 @@ Vec3 radiance(const Ray &r, int depth, unsigned short *Xi)
   is_triangle = intersect_triangle(r, tt, idt);
   if (!is_sphere && !is_triangle)
     return Vec3();
+  if (is_triangle)
+    return Vec3();
 
   Vec3 x, n, nl, f;
   Vec3 em;
@@ -152,9 +154,11 @@ Vec3 radiance(const Ray &r, int depth, unsigned short *Xi)
     x = r.o_ + r.d_ * ts;
     // Intersection point.
     // Triangle normal.
-    //n = (x - obj.pos_).norm();
-    // Oriented Sphere normal. (Is is entering of exiting).
-    //nl = n.dot(r.d_) < 0 ? n : n * -1;
+    Vec3 u = obj.p2_ - obj.p1_;
+    Vec3 v = obj.p3_ - obj.p1_;
+
+    n = (u % v).norm();
+    nl = n.dot(r.d_) < 0 ? n : n * -1;
     f = obj.color_;
   }
 
