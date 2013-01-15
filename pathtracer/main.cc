@@ -36,7 +36,8 @@ Sphere spheres[] =
 
 Triangle triangles[] =
 {
-  Triangle(Vec3(55, 3.5, 107), Vec3(60, 2.5, 87), Vec3(90, 33.4, 128), Vec3(),Vec3(0.20, 0.53, 0.75), REFR)
+  Triangle(Vec3(55, 3.5, 107), Vec3(60, 2.5, 87), Vec3(90, 33.4, 128), Vec3(),Vec3(0.20, 0.53, 0.75), REFR),
+  Triangle(Vec3(55, 3.5, 107), Vec3(60, 2.5, 57), Vec3(90, 33.4, 128), Vec3(),Vec3(0.20, 0.53, 0.75), REFR)
 };
 
 Sphere spheres[] =

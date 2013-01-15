@@ -33,7 +33,7 @@
 
        double a = -((w % v).dot(r.d_)) / D;
        double b = -((u % w).dot(r.d_)) / D;
-       double t = -((u % v).dot(w)) / D;
+       double t = ((u % v).dot(w)) / D;
 
        if (a > 0 && b > 0 && a + b <= 1)
          return t;
