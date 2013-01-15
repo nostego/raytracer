@@ -1,10 +1,43 @@
 #include <math.h>
+#include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
 #include "vector.hh"
 #include "ray.hh"
 #include "sphere.hh"
+#include "triangle.hh"
 
+// Scene 1.
+/*
+Sphere spheres[] =
+{
+  Sphere(1e3,   Vec3(1,1,-2)*1e4,    Vec3(1,1,1)*5e2,     Vec3(), DIFF),
+  Sphere(3e2,   Vec3(.6,.2,-2)*1e4,    Vec3(1,1,1)*5e3,     Vec3(), DIFF),
+  Sphere(2.5e3,   Vec3(.82,.92,-2)*1e4,    Vec3(1,1,1)*.8e2,     Vec3(), DIFF),
+
+  Sphere(2.5e4, Vec3(50, 0, 0),     Vec3(1,1,1)*1e-3,    Vec3(.2,.2,1)*0.0075, DIFF),
+  Sphere(2.5e4, Vec3(50, 0, 0),  Vec3(0.114, 0.133, 0.212)*1e-2,  Vec3(.216,.384,1)*0.0007, DIFF),
+
+  Sphere(2.5e4, Vec3(50, 0, 0),  Vec3(0.114, 0.133, 0.212)*1e-2,  Vec3(.216,.384,1)*0.003, DIFF),
+
+  Sphere(5e0,   Vec3(-.2,0.16,-1)*1e4, Vec3(1.00, 0.843, 0.698)*1e2,   Vec3(), DIFF),
+  Sphere(5e0,   Vec3(0,  0.18,-1)*1e4, Vec3(1.00, 0.851, 0.710)*1e2,  Vec3(), DIFF),
+  Sphere(5e0,   Vec3(.3, 0.15,-1)*1e4, Vec3(0.671, 0.780, 1.00)*1e2,   Vec3(), DIFF),
+  Sphere(3.5e4,   Vec3(600,-3.5e4+1, 300), Vec3(),   Vec3(.6,.8,1)*.01,  REFR),
+  Sphere(5e4,   Vec3(-500,-5e4+0, 0),   Vec3(),      Vec3(1,1,1)*.35,  DIFF),
+  Sphere(16.5,  Vec3(27,0,47),         Vec3(),              Vec3(1,1,1)*.33, DIFF),
+  Sphere(7,     Vec3(27+8*sqrt(2),0,47+8*sqrt(2)),Vec3(),  Vec3(1,1,1)*.33,  DIFF),
+  Sphere(500,   Vec3(-1e3,-300,-3e3), Vec3(),  Vec3(1,1,1)*.351,    DIFF),
+  Sphere(830,   Vec3(0,   -500,-3e3), Vec3(),  Vec3(1,1,1)*.354,    DIFF),
+  Sphere(490,  Vec3(1e3,  -300,-3e3), Vec3(),  Vec3(1,1,1)*.352,    DIFF),
+};
+*/
+
+
+Triangle triangles[] =
+{
+  Triangle(Vec3(15, 33.5, 98), Vec3(27, 33.5, 98), Vec3(19, 48.4, 98), Vec3(),Vec3(1,1,1)*.999, REFR)
+};
 Sphere spheres[] =
 {
   //Scene: radius, position, emission, color, material
@@ -43,11 +76,11 @@ inline int toInt(double x)
   return int(pow(clamp(x), 1 / 2.2) * 255 + .5);
 }
 
-inline bool intersect(const Ray &r, double &t, int &id)
+inline bool intersect_sphere(const Ray &r, double &t, int &id)
 {
   double n = sizeof(spheres) / sizeof(Sphere);
   double d;
-  double inf = t = 1e20;
+  double inf = t = INT_MAX;
 
   for (int i = int(n); i--;)
   {
@@ -61,27 +94,70 @@ inline bool intersect(const Ray &r, double &t, int &id)
   return t < inf;
 }
 
+inline bool intersect_triangle(const Ray &r, double &t, int &id)
+{
+  double n = sizeof(triangles) / sizeof(Triangle);
+  double d;
+  double inf = t = INT_MAX;
+
+  for (int i = int(n); i--;)
+  {
+    if ((d = triangles[i].intersect(r)) && d < t)
+    {
+      t = d;
+      id = i;
+    }
+  }
+
+  return t < inf;
+}
+
 Vec3 radiance(const Ray &r, int depth, unsigned short *Xi)
 {
+  bool is_sphere = false;
+  bool is_triangle = false;
   // Distance to intersection.
-  double t;
+  double ts;
+  double tt;
 
   // Id of the intersected object.
-  int id = 0;
+  int ids = 0;
+  int idt = 0;
 
   // No intersection, put black.
-  if (!intersect(r, t, id))
+  is_sphere = intersect_sphere(r, ts, ids);
+  is_triangle = intersect_triangle(r, tt, idt);
+  if (!is_sphere && !is_triangle)
     return Vec3();
 
-  const Sphere &obj = spheres[id];
+  Vec3 x, n, nl, f;
+  Vec3 em;
+  Refl_t refl;
+  if (is_sphere)
+  {
+    const Sphere obj = spheres[ids];
+    x = r.o_ + r.d_ * ts;
+    // Intersection point.
+    // Sphere normal.
+    n = (x - obj.pos_).norm();
+    // Oriented Sphere normal. (Is is entering of exiting).
+    nl = n.dot(r.d_) < 0 ? n : n * -1;
+    f = obj.color_;
+    refl = obj.refl_;
+    em = obj.emission_;
+  }
+  else
+  {
+    const Triangle &obj = triangles[idt];
+    x = r.o_ + r.d_ * ts;
+    // Intersection point.
+    // Triangle normal.
+    //n = (x - obj.pos_).norm();
+    // Oriented Sphere normal. (Is is entering of exiting).
+    //nl = n.dot(r.d_) < 0 ? n : n * -1;
+    f = obj.color_;
+  }
 
-  // Intersection point.
-  Vec3 x = r.o_ + r.d_ * t;
-  // Sphere normal.
-  Vec3 n = (x - obj.pos_).norm();
-  // Oriented Sphere normal. (Is is entering of exiting).
-  Vec3 nl = n.dot(r.d_) < 0 ? n : n * -1;
-  Vec3 f = obj.color_;
 
   double p = f.x_ > f.y_ && f.x_ > f.z_ ? f.x_ : f.y_ > f.z_ ? f.y_ : f.z_; // max refl
   if (++depth > 5)
@@ -89,10 +165,10 @@ Vec3 radiance(const Ray &r, int depth, unsigned short *Xi)
     if (erand48(Xi) < p)
       f = f * (1 / p);
     else
-      return obj.emission_; //R.R.
+      return em; //R.R.
   }
 
-  if (obj.refl_ == DIFF)
+  if (refl == DIFF)
   { // Ideal DIFFUSE reflection
 
     // Random Angle.
@@ -106,11 +182,11 @@ Vec3 radiance(const Ray &r, int depth, unsigned short *Xi)
     Vec3 v = w % u;
     // Random reflection array.
     Vec3 d = (u * cos(r1) * r2s + v * sin(r1) * r2s + w * sqrt(1 - r2)).norm();
-    return obj.emission_+ f.mult(radiance(Ray(x, d), depth, Xi));
+    return em + f.mult(radiance(Ray(x, d), depth, Xi));
   }
   // Ideal specular reflection (Mirror).
-  else if (obj.refl_ == SPEC)
-    return obj.emission_ + f.mult(radiance(Ray(x, r.d_ - n * 2 * n.dot(r.d_)), depth, Xi));
+  else if (refl == SPEC)
+    return em + f.mult(radiance(Ray(x, r.d_ - n * 2 * n.dot(r.d_)), depth, Xi));
 
   // Ideal dielectric REFRACTION
 
@@ -128,7 +204,7 @@ Vec3 radiance(const Ray &r, int depth, unsigned short *Xi)
 
  // If angle is too shallow => total internal reflection.
   if (cos2t < 0)
-    return obj.emission_ + f.mult(radiance(reflRay,depth,Xi));
+    return em + f.mult(radiance(reflRay, depth,Xi));
 
   // Refraction ray !
   Vec3 tdir = (r.d_ * nnt - n * ((into ? 1 :-1) * (ddn * nnt + sqrt(cos2t)))).norm();
@@ -143,7 +219,7 @@ Vec3 radiance(const Ray &r, int depth, unsigned short *Xi)
   double P = .25 +.5 * Re;
   double RP = Re / P;
   double TP = Tr / (1 - P);
-  return obj.emission_ + f.mult(depth > 2 ? (erand48(Xi) < P ? // Russian roulette
+  return em + f.mult(depth > 2 ? (erand48(Xi) < P ? // Russian roulette
 				   radiance(reflRay, depth, Xi) * RP:radiance(Ray(x,tdir),depth,Xi) * TP) :
 			radiance(reflRay,depth,Xi)*Re+radiance(Ray(x,tdir),depth,Xi)*Tr);
 }
@@ -160,7 +236,6 @@ void write_image(Vec3 *img, int w, int h)
     fprintf(f,"%d %d %d ", toInt(img[i].x_), toInt(img[i].y_), toInt(img[i].z_));
 }
 
-#include <iostream>
 int main(int argc, char *argv[])
 {
   int w = 512 / 3;

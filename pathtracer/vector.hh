@@ -1,6 +1,7 @@
 #ifndef Vec3_HH
 # define Vec3_HH
 # include <math.h>
+# include <climits>
 
  class Vec3
  {

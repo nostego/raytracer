@@ -7,7 +7,7 @@
  {
    public:
      Vec3 pos_, emission_, color_;
-     Refl_t refl_; // reflection type (DIFFuse, SPECular, REFRactive)
+     Refl_t refl_;
      Sphere(double rad, Vec3 p, Vec3 e, Vec3 c, Refl_t refl)
        : radius_(rad),
          pos_(p),
