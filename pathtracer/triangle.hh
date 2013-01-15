@@ -30,9 +30,10 @@
 
        Vec3 w(r.o_.x_ - p1_.x_, r.o_.y_ - p1_.y_, r.o_.z_ - p1_.z_);
        double D = -((u % v).dot(r.d_));
+
        double a = -((w % v).dot(r.d_)) / D;
        double b = -((u % w).dot(r.d_)) / D;
-       double t = -((u % v).dot(r.d_)) / D;
+       double t = -((u % v).dot(w)) / D;
 
        if (a > 0 && b > 0 && a + b <= 1)
          return t;

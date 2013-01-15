@@ -36,8 +36,9 @@ Sphere spheres[] =
 
 Triangle triangles[] =
 {
-  Triangle(Vec3(15, 33.5, 98), Vec3(36, 33.5, 98), Vec3(19, 54.4, 98), Vec3(),Vec3(1,1,1)*.999, DIFF)
+  Triangle(Vec3(55, 3.5, 107), Vec3(60, 2.5, 87), Vec3(90, 33.4, 128), Vec3(),Vec3(0.20, 0.53, 0.75), REFR)
 };
+
 Sphere spheres[] =
 {
   //Scene: radius, position, emission, color, material
@@ -45,10 +46,6 @@ Sphere spheres[] =
   Sphere(600, Vec3(90, 681.6-.27, 81.6), Vec3(12, 12, 12), Vec3(), DIFF),
   // Light 2.
   Sphere(600, Vec3(25, 681.6-.27, 81.6), Vec3(12, 12, 12), Vec3(), DIFF),
-  // Left wall.
-//  Sphere(1e5, Vec3(1e5+1, 40.8, 81.6), Vec3(),Vec3(.75, .25, .25),DIFF),
-  // Right wall.
- // Sphere(1e5, Vec3(-1e5+99, 40.8, 81.6),Vec3(),Vec3(.25, .25, .75),DIFF),
   // Back wall.
   Sphere(1e5, Vec3(50, 40.8, 1e5), Vec3(), Vec3(.75, .75, .75), DIFF),
   // Front wall.
@@ -60,7 +57,7 @@ Sphere spheres[] =
   // First Ball.
   //Sphere(16.5,Vec3(27,16.5,47), Vec3(),Vec3(1,1,1)*.999, SPEC),
   // Second Ball.
-  Sphere(13.5,Vec3(93,16.5,78), Vec3(),Vec3(1,1,1)*.999, REFR),
+  Sphere(13.5,Vec3(93, 16.5,38), Vec3(),Vec3(1,1,1)*.999, REFR),
   Sphere(10.5,Vec3(40, 26.5,48), Vec3(),Vec3(1,1,1)*.999, DIFF),
   Sphere(16.0,Vec3(10, 29.5,98), Vec3(),Vec3(1,1,1)*.999, REFR)
 };
@@ -129,8 +126,20 @@ Vec3 radiance(const Ray &r, int depth, unsigned short *Xi)
   is_triangle = intersect_triangle(r, tt, idt);
   if (!is_sphere && !is_triangle)
     return Vec3();
-  if (is_triangle)
-    return Vec3();
+
+  // Choose the closest object.
+  Vec3 xt = r.o_ + r.d_ * tt;
+  Vec3 xs = r.o_ + r.d_ * ts;
+
+  double dist = sqrt(pow(r.o_.x_ - xt.x_, 2) + pow(r.o_.y_ - xt.y_, 2) + pow(r.o_.z_ - xt.z_, 2));
+  double diss = sqrt(pow(r.o_.x_ - xs.x_, 2) + pow(r.o_.y_ - xs.y_, 2) + pow(r.o_.z_ - xs.z_, 2));
+  if (is_sphere && is_triangle)
+  {
+    if (dist < diss)
+      is_sphere = false;
+    else
+      is_triangle = false;
+  }
 
   Vec3 x, n, nl, f;
   Vec3 em;
@@ -151,8 +160,8 @@ Vec3 radiance(const Ray &r, int depth, unsigned short *Xi)
   else
   {
     const Triangle &obj = triangles[idt];
-    x = r.o_ + r.d_ * ts;
     // Intersection point.
+    x = r.o_ + r.d_ * tt;
     // Triangle normal.
     Vec3 u = obj.p2_ - obj.p1_;
     Vec3 v = obj.p3_ - obj.p1_;
@@ -160,6 +169,8 @@ Vec3 radiance(const Ray &r, int depth, unsigned short *Xi)
     n = (u % v).norm();
     nl = n.dot(r.d_) < 0 ? n : n * -1;
     f = obj.color_;
+    refl = obj.refl_;
+    em = obj.emission_;
   }
 
 
