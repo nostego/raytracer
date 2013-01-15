@@ -1,4 +1,0 @@
-raytracer
-=========
-
-Raytracer
