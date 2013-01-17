@@ -8,7 +8,7 @@
 #include "triangle.hh"
 
 // Scene 1.
-/*
+
 Sphere spheres[] =
 {
   Sphere(1e3,   Vec3(1,1,-2)*1e4,    Vec3(1,1,1)*5e2,     Vec3(), DIFF),
@@ -31,16 +31,14 @@ Sphere spheres[] =
   Sphere(830,   Vec3(0,   -500,-3e3), Vec3(),  Vec3(1,1,1)*.354,    DIFF),
   Sphere(490,  Vec3(1e3,  -300,-3e3), Vec3(),  Vec3(1,1,1)*.352,    DIFF),
 };
-*/
+
 
 
 Triangle triangles[] =
 {
-//  Triangle(Vec3(55, 3.5, 107), Vec3(60, 2.5, 57), Vec3(90, 33.4, 128), Vec3(),Vec3(0.20, 0.53, 0.75), REFR),
-
-  Triangle(Vec3(45, 25.5, 97), Vec3(70, 25.5, 3), Vec3(95, 25.5, 97), Vec3(), Vec3(0.24,0.53, 0.44), DIFF),
+  Triangle(Vec3(45, 25.4, -307), Vec3(70, 65.5, -307), Vec3(95, 25.5, -307), Vec3(), Vec3(0.75 ,0.53, 0.44), DIFF),
 };
-
+/*
 Sphere spheres[] =
 {
   //Scene: radius, position, emission, color, material
@@ -48,6 +46,8 @@ Sphere spheres[] =
   Sphere(600, Vec3(90, 681.6-.27, 81.6), Vec3(12, 12, 12), Vec3(), DIFF),
   // Light 2.
   Sphere(600, Vec3(25, 681.6-.27, 81.6), Vec3(12, 12, 12), Vec3(), DIFF),
+
+  Sphere(600, Vec3(82, -599.8, 95.6), Vec3(12, 12, 12), Vec3(), DIFF),
   // Back wall.
   Sphere(1e5, Vec3(50, 40.8, 1e5), Vec3(), Vec3(.75, .75, .75), DIFF),
   // Front wall.
@@ -62,7 +62,7 @@ Sphere spheres[] =
   Sphere(13.5,Vec3(93, 16.5,38), Vec3(),Vec3(1,1,1)*.999, REFR),
   Sphere(10.5,Vec3(40, 26.5,48), Vec3(),Vec3(1,1,1)*.999, DIFF),
   Sphere(16.0,Vec3(10, 29.5,98), Vec3(),Vec3(1,1,1)*.999, REFR)
-};
+};*/
 
 // Take values between 0 and 1.
 inline double clamp(double x)
@@ -153,7 +153,7 @@ Vec3 radiance(const Ray &r, int depth, unsigned short *Xi)
     // Intersection point.
     // Sphere normal.
     n = (x - obj.pos_).norm();
-    // Oriented Sphere normal. (Is is entering of exiting).
+    // Oriented Sphere normal. (Is is entering or exiting).
     nl = n.dot(r.d_) < 0 ? n : n * -1;
     f = obj.color_;
     refl = obj.refl_;
@@ -175,8 +175,8 @@ Vec3 radiance(const Ray &r, int depth, unsigned short *Xi)
     em = obj.emission_;
   }
 
+  double p = std::max((f.x_, f.y_), f.z_);
 
-  double p = f.x_ > f.y_ && f.x_ > f.z_ ? f.x_ : f.y_ > f.z_ ? f.y_ : f.z_; // max refl
   if (++depth > 5)
   {
     if (erand48(Xi) < p)
@@ -186,8 +186,7 @@ Vec3 radiance(const Ray &r, int depth, unsigned short *Xi)
   }
 
   if (refl == DIFF)
-  { // Ideal DIFFUSE reflection
-
+  {
     // Random Angle.
     double r1 = 2 * M_PI * erand48(Xi);
     double r2 = erand48(Xi);
@@ -219,7 +218,7 @@ Vec3 radiance(const Ray &r, int depth, unsigned short *Xi)
   double ddn = r.d_.dot(nl);
   double cos2t = 1 - pow(nnt, 2) * (1 - pow(ddn, 2));
 
- // If angle is too shallow => total internal reflection.
+  // If angle is too shallow => total internal reflection.
   if (cos2t < 0)
     return em + f.mult(radiance(reflRay, depth,Xi));
 
@@ -237,7 +236,7 @@ Vec3 radiance(const Ray &r, int depth, unsigned short *Xi)
   double RP = Re / P;
   double TP = Tr / (1 - P);
   return em + f.mult(depth > 2 ? (erand48(Xi) < P ? // Russian roulette
-				   radiance(reflRay, depth, Xi) * RP:radiance(Ray(x,tdir),depth,Xi) * TP) :
+				   radiance(reflRay, depth, Xi) * RP : radiance(Ray(x,tdir),depth,Xi) * TP) :
 			radiance(reflRay,depth,Xi)*Re+radiance(Ray(x,tdir),depth,Xi)*Tr);
 }
 
@@ -271,7 +270,8 @@ int main(int argc, char *argv[])
 
   for (int y = 0; y < h; y++)
   {
-    fprintf(stderr,"\rRendering (%d spp) %5.2f%%",samps * 4, 100. * y / (h - 1));
+    fprintf(stderr,"\rRendering Image (%d samples per pixels) %5.2f%%",samps * 4, 100. * y / (h - 1));
+    // Use for random numbers.
     unsigned short Xi[3] = {0, 0, pow(y, 3)};
     for (unsigned short x = 0; x < w; x++)
     {
@@ -299,7 +299,7 @@ int main(int argc, char *argv[])
             // Radiance divided by every samples.
 	    r = r + radiance(Ray(cam.o_ + d, d.norm()), 0, Xi) * (1.0 / samps);
 	  }
-          // Camera rays are pushed ^^^^^ forward to start in interior
+          // Gamma correction of the pixel.
 	  c[i] = c[i] + Vec3(clamp(r.x_), clamp(r.y_), clamp(r.z_)) * .25;
 	}
       }
